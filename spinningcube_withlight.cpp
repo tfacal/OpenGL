@@ -19,14 +19,15 @@ int gl_height = 480;
 
 void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
-void render(double);
+void render(double, GLuint *vaos[]);
+void draw(const GLfloat vertex_positions[], int size, GLuint *vao);
 
 GLuint shader_program = 0;                          // shader program to set render pipeline
-GLuint vao = 0;                                     // Vertext Array Object to set input data
 GLint model_location, view_location, proj_location; // Uniforms for transformation matrices
 
 GLint material_ambient_location, material_diffuse_location, material_shininess_location, material_specular_location; // Uniforms para material
 GLint light_pos_location, light_ambient_location, light_diffuse_location, light_specular_location;                   // Uniforms para la luz
+GLint light_pos_location_second, light_ambient_location_second, light_diffuse_location_second, light_specular_location_second;                   // Uniforms para la luz
 GLint normal_to_world_location;                                                                                      // Uniform normal matrix
 GLint view_pos_location;                                                                                             // Posicion camara
 
@@ -35,13 +36,19 @@ const char *vertexFileName = "spinningcube_withlight_vs.glsl";
 const char *fragmentFileName = "spinningcube_withlight_fs.glsl";
 
 // Camera
-glm::vec3 camera_pos(0.0f, 1.0f, 1.0f);
+glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
+glm::vec3 pos_pyramid(1.0f, 0.0f, 0.0f);
 
 // Lighting
 glm::vec3 light_pos(0.0f, 0.0f, 2.0f);
 glm::vec3 light_ambient(0.2f, 0.2f, 0.2f);
 glm::vec3 light_diffuse(0.5f, 0.5f, 0.5f);
 glm::vec3 light_specular(1.0f, 1.0f, 1.0f);
+
+glm::vec3 light_pos_second(0.0f, 0.0f, 2.0f);
+glm::vec3 light_ambient_second(0.2f, 0.2f, 0.2f);
+glm::vec3 light_diffuse_second(0.5f, 0.5f, 0.5f);
+glm::vec3 light_specular_second(1.0f, 1.0f, 1.0f);
 
 // Material
 glm::vec3 material_ambient(1.0f, 0.5f, 0.31f);
@@ -149,10 +156,6 @@ int main()
   glDeleteShader(vs);
   glDeleteShader(fs);
 
-  // Vertex Array Object
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
-
   // Cube to be rendered
   //
   //          0        3
@@ -212,23 +215,48 @@ int main()
       0.25f, 0.25f, -0.25f, 0.0f, 1.0f, 0.0f   // 3
   };
 
-  // Vertex Buffer Object (for vertex coordinates)
-  GLuint vbo = 0;
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
+  // Pyramid to be rendered
+  const GLfloat vertex_positions_pyramid[] = {
+    -0.25f, -0.25f, -0.25f, 0.0f, 1.0f, 0.0f,
+    -0.25f, 0.25f, -0.25f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.25f, 0.3f, 0.1f, 0.4f,
 
-  // Vertex attributes
-  // 0: vertex position (x, y, z)
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (GLvoid *)0);
-  glEnableVertexAttribArray(0);
+    0.25f, -0.25f, -0.25f, 0.0f, 0.0f, 1.0f,
+    0.25f, 0.25f, -0.25f, 0.25f, 0.8f, 0.0f,
+    0.0f, 0.0f, 0.25f, 0.3f, 0.1f, 0.4f,
 
-  // 1: vertex normals (x, y, z)
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
+    -0.25f, -0.25f, -0.25f, 0.0f, 1.0f, 0.0f,
+    0.25f, -0.25f, -0.25f, 0.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 0.25f, 0.3f, 0.1f, 0.4f,
+
+    -0.25f, 0.25f, -0.25f, 1.0f, 0.0f, 0.0f,
+    0.25f, 0.25f, -0.25f, 0.25f, 0.8f, 0.0f,
+    0.0f, 0.0f, 0.25f, 0.3f, 0.1f, 0.4f,
+
+    -0.25f, -0.25f, -0.25f, 0.0f, 1.0f, 0.0f,
+    -0.25f, 0.25f, -0.25f, 1.0f, 0.0f, 0.0f,
+    0.25f, -0.25f, -0.25f, 0.0f, 0.0f, 1.0f,
+
+    0.25f, 0.25f, -0.25f, 0.25f, 0.8f, 0.0f,
+    -0.25f, 0.25f, -0.25f, 1.0f, 0.0f, 0.0f,
+    0.25f, -0.25f, -0.25f, 0.0f, 0.0f, 1.0f,
+  };
+
+  // Vertex Array Object
+  GLuint vao_cube;
+  GLuint vao_pyramid;
+  
+  //draw cube
+  draw(vertex_positions, sizeof(vertex_positions), &vao_cube);
+
+  //draw pyramid
+  draw(vertex_positions_pyramid, sizeof(vertex_positions_pyramid), &vao_pyramid);
+
+  GLuint *vaos[] = {&vao_cube, &vao_pyramid};
 
   // Unbind vbo (it was conveniently registered by VertexAttribPointer)
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ARRAY_BUFFER, 1);
 
   // Unbind vao
   glBindVertexArray(0);
@@ -248,25 +276,30 @@ int main()
   // [...]
   view_pos_location = glGetUniformLocation(shader_program, "view_pos");
 
-  // material components
-  material_ambient_location = glGetUniformLocation(shader_program, "material.ambient");
-  material_diffuse_location = glGetUniformLocation(shader_program, "material.diffuse");
-  material_specular_location = glGetUniformLocation(shader_program, "material.specular");
-  material_shininess_location = glGetUniformLocation(shader_program, "material.shininess");
-
   // light components
   light_pos_location = glGetUniformLocation(shader_program, "light.position");
   light_ambient_location = glGetUniformLocation(shader_program, "light.ambient");
   light_diffuse_location = glGetUniformLocation(shader_program, "light.diffuse");
   light_specular_location = glGetUniformLocation(shader_program, "light.specular");
 
+  light_pos_location_second = glGetUniformLocation(shader_program, "light_second.position");
+  light_ambient_location_second = glGetUniformLocation(shader_program, "light_second.ambient");
+  light_diffuse_location_second = glGetUniformLocation(shader_program, "light_second.diffuse");
+  light_specular_location_second = glGetUniformLocation(shader_program, "light_second.specular");
+
+  // material components
+  material_ambient_location = glGetUniformLocation(shader_program, "material.ambient");
+  material_diffuse_location = glGetUniformLocation(shader_program, "material.diffuse");
+  material_specular_location = glGetUniformLocation(shader_program, "material.specular");
+  material_shininess_location = glGetUniformLocation(shader_program, "material.shininess");
+    
   // Render loop
   while (!glfwWindowShouldClose(window))
   {
 
     processInput(window);
 
-    render(glfwGetTime());
+    render(glfwGetTime(), vaos);
 
     glfwSwapBuffers(window);
 
@@ -278,7 +311,36 @@ int main()
   return 0;
 }
 
-void render(double currentTime)
+void draw(const GLfloat vertex_positions[], int size, GLuint *vao)
+{
+  // Vertex Array Object
+  glGenVertexArrays(1, vao);
+  glBindVertexArray(*vao);
+
+  // Vertex Buffer Object (for vertex coordinates)
+  GLuint vbo = 0;
+  glGenBuffers(1, &vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * size, vertex_positions, GL_STATIC_DRAW);
+
+  // Vertex attributes
+  // 0: vertex position (x, y, z)
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void *)0);
+  glEnableVertexAttribArray(0);
+
+  // 1: vertex normals (x, y, z)
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void *)(3 * sizeof(GLfloat)));
+  glEnableVertexAttribArray(1);
+
+  // Unbind vbo (it was conveniently registered by VertexAttribPointer)
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ARRAY_BUFFER, 1);
+
+  // Unbind vao
+  glBindVertexArray(0);
+}
+
+void render(double currentTime, GLuint *vaos[])
 {
   float f = (float)currentTime * 0.3f;
 
@@ -287,12 +349,13 @@ void render(double currentTime)
   glViewport(0, 0, gl_width, gl_height);
 
   glUseProgram(shader_program);
-  glBindVertexArray(vao);
+  glBindVertexArray(*vaos[0]);
 
   glm::mat4 model_matrix, view_matrix, proj_matrix;
   glm::mat3 normal_matrix;
 
   model_matrix = glm::mat4(1.f);
+  //model_matrix = glm::scale(model_matrix, glm::vec3(0.6f));
   view_matrix = glm::lookAt(camera_pos,                   // pos
                             glm::vec3(0.0f, 0.0f, 0.0f),  // target
                             glm::vec3(0.0f, 1.0f, 0.0f)); // up
@@ -320,12 +383,12 @@ void render(double currentTime)
   glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
   glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
 
+  glUniform3fv(view_pos_location, 1, glm::value_ptr(camera_pos));
+
   //
   // Normal matrix: normal vectors to world coordinates
   normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
   glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
-
-  glUniform3fv(view_pos_location, 1, glm::value_ptr(camera_pos));
 
   glUniform3fv(material_ambient_location, 1, glm::value_ptr(material_ambient));
   glUniform3fv(material_diffuse_location, 1, glm::value_ptr(material_diffuse));
@@ -337,7 +400,33 @@ void render(double currentTime)
   glUniform3fv(light_diffuse_location, 1, glm::value_ptr(light_diffuse));
   glUniform3fv(light_specular_location, 1, glm::value_ptr(light_specular));
 
+  glUniform3fv(light_pos_location_second, 1, glm::value_ptr(light_pos_second));
+  glUniform3fv(light_ambient_location_second, 1, glm::value_ptr(light_ambient_second));
+  glUniform3fv(light_diffuse_location_second, 1, glm::value_ptr(light_diffuse_second));
+  glUniform3fv(light_specular_location_second, 1, glm::value_ptr(light_specular_second));
+
   glDrawArrays(GL_TRIANGLES, 0, 36);
+
+  glBindVertexArray(*vaos[1]);
+
+  // Dibujamos piramide
+  model_matrix = glm::mat4(1.f);
+  model_matrix = glm::translate(model_matrix, pos_pyramid);
+  //model_matrix = glm::scale(model_matrix, glm::vec3(0.5f));
+
+  model_matrix = glm::rotate(model_matrix,
+                          glm::radians((float)currentTime * 45.0f),
+                          glm::vec3(0.0f, 1.0f, 0.0f));
+  model_matrix = glm::rotate(model_matrix,
+                          glm::radians((float)currentTime * 81.0f),
+                          glm::vec3(1.0f, 0.0f, 0.0f));
+
+  // Normal matrix: normal vectors to world coordinates
+  normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+  glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
+  glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
+
+  glDrawArrays(GL_TRIANGLES, 0, 18);
 }
 
 void processInput(GLFWwindow *window)
