@@ -40,8 +40,8 @@ glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
 glm::vec3 camera_front(0.0f, 0.0f, -1.0f);
 glm::vec3 camera_up(0.0f, 1.0f, 0.0f);
 
-glm::vec3 camera_pos_2(0.0f, 0.0f, 3.0f);
-glm::vec3 camera_front_2(0.0f, 0.0f, -1.0f);
+glm::vec3 camera_pos_2(0.0f, 0.0f, -3.0f);
+glm::vec3 camera_front_2(0.0f, 0.0f, 1.0f);
 glm::vec3 camera_up_2(0.0f, 1.0f, 0.0f);
 bool use_camera_2 = false;
 
@@ -302,18 +302,23 @@ int main()
   material_shininess_location = glGetUniformLocation(shader_program, "material.shininess");
     
   // Render loop
-  while (!glfwWindowShouldClose(window))
-  {
-
+while (!glfwWindowShouldClose(window))
+{
     processInput(window);
+
+    // Check if the spacebar key is pressed
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        use_camera_2 = !use_camera_2;
+        printf("Camera changed!\n");
+    }
 
     render(glfwGetTime(), vaos);
 
     glfwSwapBuffers(window);
 
     glfwPollEvents();
-  }
-
+}
   glfwTerminate();
 
   return 0;
@@ -348,105 +353,99 @@ void draw(const GLfloat vertex_positions[], int size, GLuint *vao)
   glBindVertexArray(0);
 }
 
-void render(double currentTime, GLuint* vaos[])
+void render(double currentTime, GLuint *vaos[])
 {
-  float f = (float)currentTime * 0.3f;
+    float f = (float)currentTime * 0.3f;
 
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glViewport(0, 0, gl_width, gl_height);
+    glViewport(0, 0, gl_width, gl_height);
 
-  glUseProgram(shader_program);
-  glBindVertexArray(*vaos[0]);
+    glUseProgram(shader_program);
 
-  glm::mat4 model_matrix, view_matrix, proj_matrix;
-  glm::mat3 normal_matrix;
+    glm::mat4 model_matrix, view_matrix, proj_matrix;
+    glm::mat3 normal_matrix;
 
-  model_matrix = glm::mat4(1.f);
+    model_matrix = glm::mat4(1.f);
 
-  if (!use_camera_2)
-  {
-    view_matrix = glm::lookAt(camera_pos,
-                              glm::vec3(0.0f, 0.0f, 0.0f),
-                              glm::vec3(0.0f, 1.0f, 0.0f));
-  }
-  else
-  {
-    view_matrix = glm::lookAt(camera_pos_2,
-                              glm::vec3(0.0f, 0.0f, 0.0f),
-                              glm::vec3(0.0f, 1.0f, 0.0f));
-  }
+    if (!use_camera_2)
+    {
+        view_matrix = glm::lookAt(camera_pos,
+                                  glm::vec3(0.0f, 0.0f, 0.0f),
+                                  glm::vec3(0.0f, 1.0f, 0.0f));
+    }
+    else
+    {
+        view_matrix = glm::lookAt(camera_pos_2,
+                                  glm::vec3(0.0f, 0.0f, 0.0f),
+                                  glm::vec3(0.0f, 1.0f, 0.0f));
+    }
 
-  model_matrix = glm::rotate(model_matrix,
-                             glm::radians((float)currentTime * 45.0f),
-                             glm::vec3(0.0f, 1.0f, 0.0f));
-  model_matrix = glm::rotate(model_matrix,
-                             glm::radians((float)currentTime * 81.0f),
-                             glm::vec3(1.0f, 0.0f, 0.0f));
+    model_matrix = glm::rotate(model_matrix,
+                               glm::radians((float)currentTime * 45.0f),
+                               glm::vec3(0.0f, 1.0f, 0.0f));
+    model_matrix = glm::rotate(model_matrix,
+                               glm::radians((float)currentTime * 81.0f),
+                               glm::vec3(1.0f, 0.0f, 0.0f));
 
-  proj_matrix = glm::perspective(glm::radians(50.0f),
-                                 (float)gl_width / (float)gl_height,
-                                 0.1f, 100.0f);
+    proj_matrix = glm::perspective(glm::radians(50.0f),
+                                   (float)gl_width / (float)gl_height,
+                                   0.1f, 100.0f);
 
-  glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
-  glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
-  glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
+    glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
+    glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
+    glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
 
-  glUniform3fv(view_pos_location, 1, glm::value_ptr(camera_pos));
+    glUniform3fv(view_pos_location, 1, glm::value_ptr(use_camera_2 ? camera_pos_2 : camera_pos));
 
-  normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
-  glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
+    normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+    glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
-  glUniform3fv(material_ambient_location, 1, glm::value_ptr(material_ambient));
-  glUniform3fv(material_diffuse_location, 1, glm::value_ptr(material_diffuse));
-  glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
-  glUniform1f(material_shininess_location, material_shininess);
+    glUniform3fv(material_ambient_location, 1, glm::value_ptr(material_ambient));
+    glUniform3fv(material_diffuse_location, 1, glm::value_ptr(material_diffuse));
+    glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
+    glUniform1f(material_shininess_location, material_shininess);
 
-  glUniform3fv(light_pos_location, 1, glm::value_ptr(light_pos));
-  glUniform3fv(light_ambient_location, 1, glm::value_ptr(light_ambient));
-  glUniform3fv(light_diffuse_location, 1, glm::value_ptr(light_diffuse));
-  glUniform3fv(light_specular_location, 1, glm::value_ptr(light_specular));
+    glUniform3fv(light_pos_location, 1, glm::value_ptr(light_pos));
+    glUniform3fv(light_ambient_location, 1, glm::value_ptr(light_ambient));
+    glUniform3fv(light_diffuse_location, 1, glm::value_ptr(light_diffuse));
+    glUniform3fv(light_specular_location, 1, glm::value_ptr(light_specular));
 
-  glUniform3fv(light_pos_location_second, 1, glm::value_ptr(light_pos_second));
-  glUniform3fv(light_ambient_location_second, 1, glm::value_ptr(light_ambient_second));
-  glUniform3fv(light_diffuse_location_second, 1, glm::value_ptr(light_diffuse_second));
-  glUniform3fv(light_specular_location_second, 1, glm::value_ptr(light_specular_second));
+    glUniform3fv(light_pos_location_second, 1, glm::value_ptr(light_pos_second));
+    glUniform3fv(light_ambient_location_second, 1, glm::value_ptr(light_ambient_second));
+    glUniform3fv(light_diffuse_location_second, 1, glm::value_ptr(light_diffuse_second));
+    glUniform3fv(light_specular_location_second, 1, glm::value_ptr(light_specular_second));
 
-  glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(*vaos[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
-  glBindVertexArray(*vaos[1]);
-
-  model_matrix = glm::mat4(1.f);
-  model_matrix = glm::translate(model_matrix, pos_pyramid);
-
-  model_matrix = glm::rotate(model_matrix,
-                             glm::radians((float)currentTime * 45.0f),
-                             glm::vec3(0.0f, 1.0f, 0.0f));
-  model_matrix = glm::rotate(model_matrix,
-                             glm::radians((float)currentTime * 81.0f),
-                             glm::vec3(1.0f, 0.0f, 0.0f));
-
-  normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
-  glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
-  glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
-
-  glDrawArrays(GL_TRIANGLES, 0, 18);
+    glBindVertexArray(*vaos[1]);
+    model_matrix = glm::mat4(1.f);
+    model_matrix = glm::translate(model_matrix, pos_pyramid);
+    model_matrix = glm::rotate(model_matrix,
+                               glm::radians((float)currentTime * 45.0f),
+                               glm::vec3(0.0f, 1.0f, 0.0f));
+    model_matrix = glm::rotate(model_matrix,
+                               glm::radians((float)currentTime * 81.0f),
+                               glm::vec3(1.0f, 0.0f, 0.0f));
+    normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+    glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
+    glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
+    glDrawArrays(GL_TRIANGLES, 0, 18);
 }
+
 
 
 void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-        use_camera_2 = !use_camera_2;
 }
 
 // Callback function to track window size and update viewport
 void glfw_window_size_callback(GLFWwindow *window, int width, int height)
 {
-  gl_width = width;
-  gl_height = height;
-  printf("New viewport: (width: %d, height: %d)\n", width, height);
+    gl_width = width;
+    gl_height = height;
+    printf("New viewport: (width: %d, height: %d)\n", width, height);
 }
