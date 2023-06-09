@@ -13,13 +13,17 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "textfile_ALT.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 
 int gl_width = 640;
 int gl_height = 480;
 
 void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
-void render(double, GLuint *vaos[]);
+void render(double, GLuint *vaos[], unsigned int);
+unsigned int loadTexture(char const *);
 void draw(const GLfloat vertex_positions[], int size, GLuint *vao);
 
 GLuint shader_program = 0;                          // shader program to set render pipeline
@@ -166,53 +170,53 @@ int main()
   //       6        5
   //
   const GLfloat vertex_positions[] = {
-      -0.25f, -0.25f, -0.25f, 0.0f, 0.0f, -1.0f, // 1
-      -0.25f, 0.25f, -0.25f, 0.0f, 0.0f, -1.0f,  // 0
-      0.25f, -0.25f, -0.25f, 0.0f, 0.0f, -1.0f,  // 2
+        -0.25f, -0.25f, -0.25f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,  // 1
+     -0.25f,  0.25f, -0.25f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,  // 0
+      0.25f, -0.25f, -0.25f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,  // 2
 
-      0.25f, 0.25f, -0.25f, 0.0f, 0.0f, -1.0f,  // 3
-      0.25f, -0.25f, -0.25f, 0.0f, 0.0f, -1.0f, // 2
-      -0.25f, 0.25f, -0.25f, 0.0f, 0.0f, -1.0f, // 0
+      0.25f,  0.25f, -0.25f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,  // 3
+      0.25f, -0.25f, -0.25f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,  // 2
+     -0.25f,  0.25f, -0.25f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,  // 0
 
-      0.25f, -0.25f, -0.25f, 1.0f, 0.0f, 0.0f, // 2
-      0.25f, 0.25f, -0.25f, 1.0f, 0.0f, 0.0f,  // 3
-      0.25f, -0.25f, 0.25f, 1.0f, 0.0f, 0.0f,  // 5
+      0.25f, -0.25f, -0.25f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,  // 2
+      0.25f,  0.25f, -0.25f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // 3
+      0.25f, -0.25f,  0.25f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // 5
 
-      0.25f, 0.25f, 0.25f, 1.0f, 0.0f, 0.0f,  // 4
-      0.25f, -0.25f, 0.25f, 1.0f, 0.0f, 0.0f, // 5
-      0.25f, 0.25f, -0.25f, 1.0f, 0.0f, 0.0f, // 3
+      0.25f,  0.25f,  0.25f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // 4
+      0.25f, -0.25f,  0.25f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // 5
+      0.25f,  0.25f, -0.25f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // 3
 
-      0.25f, -0.25f, 0.25f, 0.0f, 0.0f, 1.0f,  // 5
-      0.25f, 0.25f, 0.25f, 0.0f, 0.0f, 1.0f,   // 4
-      -0.25f, -0.25f, 0.25f, 0.0f, 0.0f, 1.0f, // 6
+      0.25f, -0.25f,  0.25f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // 5
+      0.25f,  0.25f,  0.25f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,  // 4
+     -0.25f, -0.25f,  0.25f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // 6
 
-      -0.25f, 0.25f, 0.25f, 0.0f, 0.0f, 1.0f,  // 7
-      -0.25f, -0.25f, 0.25f, 0.0f, 0.0f, 1.0f, // 6
-      0.25f, 0.25f, 0.25f, 0.0f, 0.0f, 1.0f,   // 4
+     -0.25f,  0.25f,  0.25f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  // 7
+     -0.25f, -0.25f,  0.25f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // 6
+      0.25f,  0.25f,  0.25f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,  // 4
 
-      -0.25f, -0.25f, 0.25f, -1.0f, 0.0f, 0.0f,  // 6
-      -0.25f, 0.25f, 0.25f, -1.0f, 0.0f, 0.0f,   // 7
-      -0.25f, -0.25f, -0.25f, -1.0f, 0.0f, 0.0f, // 1
+     -0.25f, -0.25f,  0.25f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,  // 6
+     -0.25f,  0.25f,  0.25f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // 7
+     -0.25f, -0.25f, -0.25f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // 1
 
-      -0.25f, 0.25f, -0.25f, -1.0f, 0.0f, 0.0f,  // 0
-      -0.25f, -0.25f, -0.25f, -1.0f, 0.0f, 0.0f, // 1
-      -0.25f, 0.25f, 0.25f, -1.0f, 0.0f, 0.0f,   // 7
+     -0.25f,  0.25f, -0.25f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // 0
+     -0.25f, -0.25f, -0.25f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // 1
+     -0.25f,  0.25f,  0.25f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // 7
 
-      0.25f, -0.25f, -0.25f, 0.0f, -1.0f, 0.0f,  // 2
-      0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 0.0f,   // 5
-      -0.25f, -0.25f, -0.25f, 0.0f, -1.0f, 0.0f, // 1
+      0.25f, -0.25f, -0.25f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,  // 2
+      0.25f, -0.25f,  0.25f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,  // 5
+     -0.25f, -0.25f, -0.25f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,  // 1
 
-      -0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 0.0f,  // 6
-      -0.25f, -0.25f, -0.25f, 0.0f, -1.0f, 0.0f, // 1
-      0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 0.0f,   // 5
+     -0.25f, -0.25f,  0.25f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,  // 6
+     -0.25f, -0.25f, -0.25f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,  // 1
+      0.25f, -0.25f,  0.25f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,  // 5
 
-      0.25f, 0.25f, 0.25f, 0.0f, 1.0f, 0.0f,  // 4
-      0.25f, 0.25f, -0.25f, 0.0f, 1.0f, 0.0f, // 3
-      -0.25f, 0.25f, 0.25f, 0.0f, 1.0f, 0.0f, // 7
+      0.25f,  0.25f,  0.25f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // 4
+      0.25f,  0.25f, -0.25f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,  // 3
+     -0.25f,  0.25f,  0.25f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  // 7
 
-      -0.25f, 0.25f, -0.25f, 0.0f, 1.0f, 0.0f, // 0
-      -0.25f, 0.25f, 0.25f, 0.0f, 1.0f, 0.0f,  // 7
-      0.25f, 0.25f, -0.25f, 0.0f, 1.0f, 0.0f   // 3
+     -0.25f,  0.25f, -0.25f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,  // 0
+     -0.25f,  0.25f,  0.25f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  // 7
+      0.25f,  0.25f, -0.25f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f   // 3
   };
 
   // Pyramid to be rendered
@@ -288,18 +292,27 @@ int main()
   light_specular_location_second = glGetUniformLocation(shader_program, "light_second.specular");
 
   // material components
-  material_ambient_location = glGetUniformLocation(shader_program, "material.ambient");
+  //material_ambient_location = glGetUniformLocation(shader_program, "material.ambient");
   material_diffuse_location = glGetUniformLocation(shader_program, "material.diffuse");
   material_specular_location = glGetUniformLocation(shader_program, "material.specular");
   material_shininess_location = glGetUniformLocation(shader_program, "material.shininess");
     
+
+   // load textures (we now use a utility function to keep the code more organized)
+   // -----------------------------------------------------------------------------
+  unsigned int diffuseMap = loadTexture("./container2.png");
+
+  glUniform1i(material_diffuse_location, 0);
+
+
+
   // Render loop
   while (!glfwWindowShouldClose(window))
   {
 
     processInput(window);
 
-    render(glfwGetTime(), vaos);
+    render(glfwGetTime(), vaos, diffuseMap);
 
     glfwSwapBuffers(window);
 
@@ -325,12 +338,16 @@ void draw(const GLfloat vertex_positions[], int size, GLuint *vao)
 
   // Vertex attributes
   // 0: vertex position (x, y, z)
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *)0);
   glEnableVertexAttribArray(0);
 
   // 1: vertex normals (x, y, z)
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void *)(3 * sizeof(GLfloat)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *)(3 * sizeof(GLfloat)));
   glEnableVertexAttribArray(1);
+
+    // 2: coordenadas de la textura (x, y)
+   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+   glEnableVertexAttribArray(2);
 
   // Unbind vbo (it was conveniently registered by VertexAttribPointer)
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -340,7 +357,7 @@ void draw(const GLfloat vertex_positions[], int size, GLuint *vao)
   glBindVertexArray(0);
 }
 
-void render(double currentTime, GLuint *vaos[])
+void render(double currentTime, GLuint *vaos[], unsigned int diffuseMap)
 {
   float f = (float)currentTime * 0.3f;
 
@@ -390,8 +407,8 @@ void render(double currentTime, GLuint *vaos[])
   normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
   glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
-  glUniform3fv(material_ambient_location, 1, glm::value_ptr(material_ambient));
-  glUniform3fv(material_diffuse_location, 1, glm::value_ptr(material_diffuse));
+  //glUniform3fv(material_ambient_location, 1, glm::value_ptr(material_ambient));
+  //glUniform3fv(material_diffuse_location, 1, glm::value_ptr(material_diffuse));
   glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
   glUniform1f(material_shininess_location, material_shininess);
 
@@ -404,6 +421,10 @@ void render(double currentTime, GLuint *vaos[])
   glUniform3fv(light_ambient_location_second, 1, glm::value_ptr(light_ambient_second));
   glUniform3fv(light_diffuse_location_second, 1, glm::value_ptr(light_diffuse_second));
   glUniform3fv(light_specular_location_second, 1, glm::value_ptr(light_specular_second));
+
+  // bind diffuse map
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, diffuseMap);
 
   glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -426,6 +447,11 @@ void render(double currentTime, GLuint *vaos[])
   glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
   glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
+    // bind diffuse map
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, diffuseMap);
+
+
   glDrawArrays(GL_TRIANGLES, 0, 18);
 }
 
@@ -442,3 +468,41 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height)
   gl_height = height;
   printf("New viewport: (width: %d, height: %d)\n", width, height);
 }
+
+
+ unsigned int loadTexture(char const * path)
+ {
+     unsigned int textureID;
+     glGenTextures(1, &textureID);
+
+     int width, height, nrComponents;
+     unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+     if (data)
+     {
+         GLenum format;
+         if (nrComponents == 1)
+             format = GL_RED;
+         else if (nrComponents == 3)
+             format = GL_RGB;
+         else if (nrComponents == 4)
+             format = GL_RGBA;
+
+         glBindTexture(GL_TEXTURE_2D, textureID);
+         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+         glGenerateMipmap(GL_TEXTURE_2D);
+
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+         stbi_image_free(data);
+     }
+     else
+     {
+         fprintf(stderr, "Texture failed to load at path: %s\n", path);
+         stbi_image_free(data);
+     }
+
+     return textureID;
+ }
