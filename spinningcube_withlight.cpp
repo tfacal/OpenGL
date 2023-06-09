@@ -37,6 +37,14 @@ const char *fragmentFileName = "spinningcube_withlight_fs.glsl";
 
 // Camera
 glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
+glm::vec3 camera_front(0.0f, 0.0f, -1.0f);
+glm::vec3 camera_up(0.0f, 1.0f, 0.0f);
+
+glm::vec3 camera_pos_2(0.0f, 0.0f, 3.0f);
+glm::vec3 camera_front_2(0.0f, 0.0f, -1.0f);
+glm::vec3 camera_up_2(0.0f, 1.0f, 0.0f);
+bool use_camera_2 = false;
+
 glm::vec3 pos_pyramid(1.0f, 0.0f, 0.0f);
 
 // Lighting
@@ -340,7 +348,7 @@ void draw(const GLfloat vertex_positions[], int size, GLuint *vao)
   glBindVertexArray(0);
 }
 
-void render(double currentTime, GLuint *vaos[])
+void render(double currentTime, GLuint* vaos[])
 {
   float f = (float)currentTime * 0.3f;
 
@@ -355,26 +363,27 @@ void render(double currentTime, GLuint *vaos[])
   glm::mat3 normal_matrix;
 
   model_matrix = glm::mat4(1.f);
-  //model_matrix = glm::scale(model_matrix, glm::vec3(0.6f));
-  view_matrix = glm::lookAt(camera_pos,                   // pos
-                            glm::vec3(0.0f, 0.0f, 0.0f),  // target
-                            glm::vec3(0.0f, 1.0f, 0.0f)); // up
 
-  // model_matrix = glm::translate(model_matrix, glm::vec3(0.0f, 0.0f, 0.0f));
+  if (!use_camera_2)
+  {
+    view_matrix = glm::lookAt(camera_pos,
+                              glm::vec3(0.0f, 0.0f, 0.0f),
+                              glm::vec3(0.0f, 1.0f, 0.0f));
+  }
+  else
+  {
+    view_matrix = glm::lookAt(camera_pos_2,
+                              glm::vec3(0.0f, 0.0f, 0.0f),
+                              glm::vec3(0.0f, 1.0f, 0.0f));
+  }
 
-  // Moving cube
-  // model_matrix = glm::rotate(model_matrix,
-  //   [...]
-  //
   model_matrix = glm::rotate(model_matrix,
                              glm::radians((float)currentTime * 45.0f),
                              glm::vec3(0.0f, 1.0f, 0.0f));
   model_matrix = glm::rotate(model_matrix,
                              glm::radians((float)currentTime * 81.0f),
                              glm::vec3(1.0f, 0.0f, 0.0f));
-  // Projection
-  // proj_matrix = glm::perspective(glm::radians(50.0f),
-  //   [...]
+
   proj_matrix = glm::perspective(glm::radians(50.0f),
                                  (float)gl_width / (float)gl_height,
                                  0.1f, 100.0f);
@@ -385,8 +394,6 @@ void render(double currentTime, GLuint *vaos[])
 
   glUniform3fv(view_pos_location, 1, glm::value_ptr(camera_pos));
 
-  //
-  // Normal matrix: normal vectors to world coordinates
   normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
   glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
@@ -409,19 +416,16 @@ void render(double currentTime, GLuint *vaos[])
 
   glBindVertexArray(*vaos[1]);
 
-  // Dibujamos piramide
   model_matrix = glm::mat4(1.f);
   model_matrix = glm::translate(model_matrix, pos_pyramid);
-  //model_matrix = glm::scale(model_matrix, glm::vec3(0.5f));
 
   model_matrix = glm::rotate(model_matrix,
-                          glm::radians((float)currentTime * 45.0f),
-                          glm::vec3(0.0f, 1.0f, 0.0f));
+                             glm::radians((float)currentTime * 45.0f),
+                             glm::vec3(0.0f, 1.0f, 0.0f));
   model_matrix = glm::rotate(model_matrix,
-                          glm::radians((float)currentTime * 81.0f),
-                          glm::vec3(1.0f, 0.0f, 0.0f));
+                             glm::radians((float)currentTime * 81.0f),
+                             glm::vec3(1.0f, 0.0f, 0.0f));
 
-  // Normal matrix: normal vectors to world coordinates
   normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
   glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
   glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
@@ -429,10 +433,14 @@ void render(double currentTime, GLuint *vaos[])
   glDrawArrays(GL_TRIANGLES, 0, 18);
 }
 
-void processInput(GLFWwindow *window)
+
+void processInput(GLFWwindow* window)
 {
-  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    glfwSetWindowShouldClose(window, 1);
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+        use_camera_2 = !use_camera_2;
 }
 
 // Callback function to track window size and update viewport
