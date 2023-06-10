@@ -215,32 +215,28 @@ int main()
       0.25f, 0.25f, -0.25f, 0.0f, 1.0f, 0.0f   // 3
   };
 
-  // Pyramid to be rendered
-  const GLfloat vertex_positions_pyramid[] = {
-    -0.25f, -0.25f, -0.25f, 0.0f, 0.0f, -1.0f,
-    -0.25f, 0.25f, -0.25f, 0.0f, 0.0f, -1.0f,
-    0.0f, 0.0f, 0.25f, 0.0f, 0.0f, -1.0f,
+   // Pyramid to be rendered
+const GLfloat vertex_positions_pyramid[] = {
+    // Base - Triángulo frontal
+    0.0f, -0.25f, 0.0f, 0.0f, -1.0f, 0.0f,  // Vértice 0
+    -0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 0.0f, // Vértice 1
+    0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 0.0f,  // Vértice 2
 
-    0.25f, -0.25f, -0.25f, 1.0f, 0.0f, 0.0f,
-    0.25f, 0.25f, -0.25f, 1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 0.25f, 1.0f, 0.0f, 0.0f,
+    // Triángulo frontal derecho
+    0.0f, -0.25f, 0.0f, 1.0f, -1.0f, 0.0f, // Vértice 0
+    0.25f, -0.25f, 0.25f, 1.0f, -1.0f, 0.0f,  // Vértice 2
+    0.0f, 0.25f, 0.0f, 1.0f, -1.0f, 0.0f,  // Vértice 3
 
-    -0.25f, -0.25f, -0.25f, 0.0f, 0.0f, 1.0f,
-    0.25f, -0.25f, -0.25f, 0.0f, 0.0f, 1.0f,
-    0.0f, 0.0f, 0.25f, 0.0f, 0.0f, 1.0f,
+    // Triángulo frontal izquierdo
+    0.0f, -0.25f, 0.0f, -1.0f, -1.0f, 0.0f,   // Vértice 0
+    -0.25f, -0.25f, 0.25f, -1.0f, -1.0f, 0.0f,  // Vértice 1
+    0.0f, 0.25f, 0.0f, -1.0f, -1.0f, 0.0f,  // Vértice 3
 
-    -0.25f, 0.25f, -0.25f, -1.0f, 0.0f, 0.0f,
-    0.25f, 0.25f, -0.25f, -1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 0.25f,  -1.0f, 0.0f, 0.0f,
-
-    -0.25f, -0.25f, -0.25f, 0.0f, 1.0f, 0.0f,
-    -0.25f, 0.25f, -0.25f, 0.0f, 1.0f, 0.0f,
-    0.25f, -0.25f, -0.25f, 0.0f, 1.0f, 0.0f,
-
-    0.25f, 0.25f, -0.25f, 0.0f, 1.0f, 0.0f,
-    -0.25f, 0.25f, -0.25f, 0.0f, 1.0f, 0.0f,
-    0.25f, -0.25f, -0.25f, 0.0f, 1.0f, 0.0f,
-  };
+    // Triángulo trasero
+    -0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 1.0f,  // Vértice 1
+    0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 1.0f,  // Vértice 2
+    0.0f, 0.25f, 0.0f, 0.0f, -1.0f, 1.0f,  // Vértice 3
+};
 
   // Vertex Array Object
   GLuint vao_cube;
@@ -321,7 +317,7 @@ void draw(const GLfloat vertex_positions[], int size, GLuint *vao)
   GLuint vbo = 0;
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * size, vertex_positions, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, size, vertex_positions, GL_STATIC_DRAW);
 
   // Vertex attributes
   // 0: vertex position (x, y, z)
@@ -426,7 +422,7 @@ void render(double currentTime, GLuint *vaos[])
   glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
   glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
-  glDrawArrays(GL_TRIANGLES, 0, 18);
+  glDrawArrays(GL_TRIANGLES, 0, 15);
 }
 
 void processInput(GLFWwindow *window)
