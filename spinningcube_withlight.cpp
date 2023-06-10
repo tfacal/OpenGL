@@ -22,14 +22,14 @@ int gl_height = 480;
 
 void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
-void render(double, GLuint *vaos[], unsigned int map);
+void render(double, GLuint *vaos[], unsigned int map, unsigned int specularMap);
 void draw(const GLfloat vertex_positions[], int size, GLuint *vao);
 unsigned int addTexture(char const *file);
 
 GLuint shader_program = 0;                          // shader program to set render pipeline
 GLint model_location, view_location, proj_location; // Uniforms for transformation matrices
 
-GLint material_shininess_location, material_specular_location; // Uniforms para material
+GLint material_shininess_location, material_specular_location, material_diffuse_location; // Uniforms para material
 GLint light_pos_location, light_ambient_location, light_diffuse_location, light_specular_location;                   // Uniforms para la luz
 GLint light_pos_location_second, light_ambient_location_second, light_diffuse_location_second, light_specular_location_second;                   // Uniforms para la luz
 GLint normal_to_world_location;                                                                                      // Uniform normal matrix
@@ -58,7 +58,7 @@ glm::vec3 light_specular_second(1.0f, 1.0f, 1.0f);
 //glm::vec3 material_ambient(1.0f, 0.5f, 0.31f);
 //glm::vec3 material_diffuse(1.0f, 0.5f, 0.31f);
 glm::vec3 material_specular(0.5f, 0.5f, 0.5f);
-const GLfloat material_shininess = 32.0f;
+const GLfloat material_shininess = 64.0f;
 
 int main()
 {
@@ -274,6 +274,7 @@ int main()
   view_pos_location = glGetUniformLocation(shader_program, "view_pos");
 
   unsigned int map = addTexture("./textura.png");
+  unsigned int specularMap= addTexture("./specularMap.png");
 
   // light components
   light_pos_location = glGetUniformLocation(shader_program, "light.position");
@@ -298,7 +299,7 @@ int main()
 
     processInput(window);
 
-    render(glfwGetTime(), vaos, map);
+    render(glfwGetTime(), vaos, map, specularMap);
 
     glfwSwapBuffers(window);
 
@@ -349,7 +350,7 @@ void draw(const GLfloat vertex_positions[], int size, GLuint *vao)
   glBindVertexArray(0);
 }
 
-void render(double currentTime, GLuint *vaos[], unsigned int map)
+void render(double currentTime, GLuint *vaos[], unsigned int map, unsigned int specularMap)
 {
   float f = (float)currentTime * 0.3f;
 
@@ -401,7 +402,7 @@ void render(double currentTime, GLuint *vaos[], unsigned int map)
 
   // glUniform3fv(material_ambient_location, 1, glm::value_ptr(material_ambient));
   // glUniform3fv(material_diffuse_location, 1, glm::value_ptr(material_diffuse));
-  glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
+  //glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
   glUniform1f(material_shininess_location, material_shininess);
 
   glUniform3fv(light_pos_location, 1, glm::value_ptr(light_pos));
@@ -413,6 +414,16 @@ void render(double currentTime, GLuint *vaos[], unsigned int map)
   glUniform3fv(light_ambient_location_second, 1, glm::value_ptr(light_ambient_second));
   glUniform3fv(light_diffuse_location_second, 1, glm::value_ptr(light_diffuse_second));
   glUniform3fv(light_specular_location_second, 1, glm::value_ptr(light_specular_second));
+
+  glUniform1i(material_diffuse_location, 0);
+  glUniform1i(material_specular_location, 1);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, map);
+
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, specularMap);
+
 
   glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -434,6 +445,16 @@ void render(double currentTime, GLuint *vaos[], unsigned int map)
   normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
   glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
   glUniformMatrix3fv(normal_to_world_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
+
+  glUniform1i(material_diffuse_location, 0);
+  glUniform1i(material_specular_location, 1);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, map);
+
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, specularMap);
+
 
   glDrawArrays(GL_TRIANGLES, 0, 18);
 }
