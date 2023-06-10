@@ -215,28 +215,27 @@ int main()
       0.25f, 0.25f, -0.25f, 0.0f, 1.0f, 0.0f   // 3
   };
 
-   // Pyramid to be rendered
 const GLfloat vertex_positions_pyramid[] = {
-    // Base - Triángulo frontal
-    0.0f, -0.25f, 0.0f, 0.0f, -1.0f, 0.0f,  // Vértice 0
-    -0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 0.0f, // Vértice 1
-    0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 0.0f,  // Vértice 2
+     // Base - Triángulo frontal
+     0.0f, -0.25f, 0.0f, 0.0f, -1.0f, 0.0f, 0.5f, 0.0f,  // Vértice 0
+     -0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,  // Vértice 1
+     0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,  // Vértice 2
 
-    // Triángulo frontal derecho
-    0.0f, -0.25f, 0.0f, 1.0f, -1.0f, 0.0f, // Vértice 0
-    0.25f, -0.25f, 0.25f, 1.0f, -1.0f, 0.0f,  // Vértice 2
-    0.0f, 0.25f, 0.0f, 1.0f, -1.0f, 0.0f,  // Vértice 3
+     // Triángulo frontal derecho
+     0.0f, -0.25f, 0.0f, 1.0f, -1.0f, 0.0f, 0.5f, 0.0f,  // Vértice 0
+     0.25f, -0.25f, 0.25f, 1.0f, -1.0f, 0.0f, 1.0f, 1.0f,  // Vértice 2
+     0.0f, 0.25f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f,  // Vértice 3
 
-    // Triángulo frontal izquierdo
-    0.0f, -0.25f, 0.0f, -1.0f, -1.0f, 0.0f,   // Vértice 0
-    -0.25f, -0.25f, 0.25f, -1.0f, -1.0f, 0.0f,  // Vértice 1
-    0.0f, 0.25f, 0.0f, -1.0f, -1.0f, 0.0f,  // Vértice 3
+     // Triángulo frontal izquierdo
+     0.0f, -0.25f, 0.0f, -1.0f, -1.0f, 0.0f, 0.5f, 0.0f,  // Vértice 0
+     -0.25f, -0.25f, 0.25f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f,  // Vértice 1
+     0.0f, 0.25f, 0.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,  // Vértice 3
 
-    // Triángulo trasero
-    -0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 1.0f,  // Vértice 1
-    0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 1.0f,  // Vértice 2
-    0.0f, 0.25f, 0.0f, 0.0f, -1.0f, 1.0f,  // Vértice 3
-};
+     // Triángulo trasero
+     -0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f,  // Vértice 1
+     0.25f, -0.25f, 0.25f, 0.0f, -1.0f, 1.0f, 1.0f, 0.0f,  // Vértice 2
+     0.0f, 0.25f, 0.0f, 0.0f, -1.0f, 1.0f, 0.5f, 1.0f,  // Vértice 3
+ };
 
   // Vertex Array Object
   GLuint vao_cube;
