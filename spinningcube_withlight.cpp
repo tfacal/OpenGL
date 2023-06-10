@@ -20,6 +20,8 @@
 int gl_width = 640;
 int gl_height = 480;
 
+bool prev_space_state=false;
+
 void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void render(double, GLuint *vaos[], unsigned int map, unsigned int specularMap);
@@ -42,6 +44,14 @@ const char *fragmentFileName = "spinningcube_withlight_fs.glsl";
 // Camera
 glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
 glm::vec3 pos_pyramid(1.0f, 0.0f, 0.0f);
+glm::vec3 camera_front(0.0f, 0.0f, -1.0f);
+glm::vec3 camera_up(0.0f, 1.0f, 0.0f);
+
+glm::vec3 camera_pos_2(0.0f, 0.0f, -3.0f);
+glm::vec3 camera_front_2(0.0f, 0.0f, 1.0f);
+glm::vec3 camera_up_2(0.0f, 1.0f, 0.0f);
+bool use_camera_2 = false;
+
 
 // Lighting
 glm::vec3 light_pos(0.0f, 0.0f, 2.0f);
@@ -254,6 +264,13 @@ const GLfloat vertex_positions_pyramid[] = {
 
   GLuint *vaos[] = {&vao_cube, &vao_pyramid};
 
+   // Unbind vbo (it was conveniently registered by VertexAttribPointer)
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ARRAY_BUFFER, 1);
+
+  // Unbind vao
+  glBindVertexArray(0);
+
   // Uniforms
   // - Model matrix
   // - View matrix
@@ -294,6 +311,19 @@ const GLfloat vertex_positions_pyramid[] = {
   {
 
     processInput(window);
+     // Check if the spacebar key is pressed
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        if (!prev_space_state) // Verificar que la tecla no haya estado presionada en el frame anterior
+        {
+            use_camera_2 = !use_camera_2;
+        }
+        prev_space_state = true; // Actualizar el estado anterior de la tecla
+    }
+    else
+    {
+        prev_space_state = false; // Reiniciar el estado anterior si la tecla no está presionada
+    }
 
     render(glfwGetTime(), vaos, map, specularMap);
 
@@ -362,9 +392,18 @@ void render(double currentTime, GLuint *vaos[], unsigned int map, unsigned int s
 
   model_matrix = glm::mat4(1.f);
   //model_matrix = glm::scale(model_matrix, glm::vec3(0.6f));
-  view_matrix = glm::lookAt(camera_pos,                   // pos
-                            glm::vec3(0.0f, 0.0f, 0.0f),  // target
-                            glm::vec3(0.0f, 1.0f, 0.0f)); // up
+  if (!use_camera_2)
+    {
+        view_matrix = glm::lookAt(camera_pos,
+                                  glm::vec3(0.0f, 0.0f, 0.0f),
+                                  glm::vec3(0.0f, 1.0f, 0.0f));
+    }
+    else
+    {
+        view_matrix = glm::lookAt(camera_pos_2,
+                                  glm::vec3(0.0f, 0.0f, 0.0f),
+                                  glm::vec3(0.0f, 1.0f, 0.0f));
+    }
 
   // model_matrix = glm::translate(model_matrix, glm::vec3(0.0f, 0.0f, 0.0f));
 
@@ -389,7 +428,7 @@ void render(double currentTime, GLuint *vaos[], unsigned int map, unsigned int s
   glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
   glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
 
-  glUniform3fv(view_pos_location, 1, glm::value_ptr(camera_pos));
+  glUniform3fv(view_pos_location, 1, glm::value_ptr(use_camera_2 ? camera_pos_2 : camera_pos));
 
   //
   // Normal matrix: normal vectors to world coordinates
